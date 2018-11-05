@@ -10,8 +10,6 @@ class DocumentRetrieval(object):
     '''
     classdocs
     '''
-
-
     def __init__(self, query, pubmed_db):
         '''
         Constructor

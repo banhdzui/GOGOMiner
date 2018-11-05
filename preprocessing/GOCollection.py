@@ -7,11 +7,15 @@ Created on 29 Oct 2018
 import numpy as np 
 import xml.etree.ElementTree as ET
 
-from common.TextPreprocessing import stemmedTokens, cosineSimilarity,\
+from common.TextPreprocessing import tokenizeUnigrams, cosineSimilarity,\
     getStringBetween
 
+'''
+Object representing GO term. It includes id, name, definition, and synonyms (in stemmed form)
+'''
 class GOTerm(object):
-    def __init__(self, descriptions):
+    
+    def __init__(self, descriptions=None):
 
         self.synonyms = []
         if descriptions is None: return
@@ -19,14 +23,12 @@ class GOTerm(object):
         self.id = descriptions['id']
         self.name = descriptions['name']
         
-        self.name_words = stemmedTokens(descriptions['name'])
-        #print(self.name_words)
-        self.def_words = stemmedTokens(descriptions['def'])
-        #print(self.def_words)
+        self.name_words = tokenizeUnigrams(descriptions['name'])
+    
+        self.def_words = tokenizeUnigrams(descriptions['def'])
+        
         for text in descriptions['synonym']:
-            self.synonyms.append(stemmedTokens(text))
-            #print(self.synonyms[-1])
-        #print('*********')
+            self.synonyms.append(tokenizeUnigrams(text))
            
     def similarity(self, word_set):
         values = []
@@ -36,6 +38,15 @@ class GOTerm(object):
             values.append(cosineSimilarity(synonym, word_set))
         return np.max(values)
         
+    def getAllKeywords(self):
+        keywords = []
+        keywords.extend(self.name_words)
+        keywords.extend(self.def_words)
+        for syn in self.synonyms:
+            keywords.extend(syn)
+            
+        return set(keywords)
+    
     def printTerm(self):
         print(self.id)
         print(self.name_words)
@@ -51,11 +62,19 @@ class GOCollection(object):
         Constructor
         '''
         self.go_terms = []
-        self.term_dict = {}
+        self.term_id_name_dict = {}
         
     def addTerm(self, term):
         self.go_terms.append(term)
-        self.term_dict[term.id] = term.name
+        self.term_id_name_dict[term.id] = term.name
+        
+    def extractFeatures(self):
+        feature_list = []
+        for term in self.go_terms:
+            feature_list.extend(term.getAllKeywords())  
+        
+        feature_list = list(set(feature_list))
+        return {feature_list[i]: i for i in range(len(feature_list))} 
         
     def extractFromObo(self, file_name):
         self.go_terms = []
