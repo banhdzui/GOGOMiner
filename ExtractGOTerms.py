@@ -37,4 +37,5 @@ if __name__ == '__main__':
         terms = extractor.extract(document)
         print(','.join([str((t, collector.term_dict[t])) for t in terms]))
         print('---------------')
+        print('testing for branches')
     
